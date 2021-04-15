@@ -1,6 +1,4 @@
-﻿using GinaTellsMovies.API.Properties;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
+﻿using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Net.Http;
@@ -9,34 +7,35 @@ using static GinaTellsMovies.API.Properties.ConfigApi;
 
 namespace GinaTellsMovies.API.Controllers
 {
-    [Route("[controller]")]
     [ApiController]
+    [Route("[controller]")]
 
     public class MoviesController : ControllerBase
     {
 
-        public class Movie
-        {
-            public string Name { get; set; }
-        }
-
         private readonly HttpClient _client = new HttpClient();
 
-        [HttpGet]
-        public async Task<IActionResult> GetMovie()
+        [HttpGet("PopularMovies")]
+        public async Task<IActionResult> PopularMovies()
         {
-            Movie movie = null;
-            string movieString = "";
+            string movieString;
             object movieJson = null;
             const string api_key = ApiToken;
-            HttpResponseMessage response = await _client.GetAsync($"https://api.themoviedb.org/3/movie/popular?api_key={api_key}");
-            if (response.IsSuccessStatusCode)
+            try
             {
-                movieString = await response.Content.ReadAsStringAsync();
-                //movieJson = JsonConvert.DeserializeObject(movieString);
-                movieJson = JToken.Parse(movieString).ToObject<object>();
+                HttpResponseMessage response = await _client.GetAsync($"https://api.themoviedb.org/3/movie/popular?api_key={api_key}");
+                if (response.IsSuccessStatusCode)
+                {
+                    movieString = await response.Content.ReadAsStringAsync();
+                    movieJson = JToken.Parse(movieString).ToObject<object>();
+                    return Ok(movieJson);
+                }
+                return StatusCode(400);
+            }catch (Exception ex){
+                Console.WriteLine(ex);
+                return StatusCode(500);
             }
-            return Ok(movieJson);
         }
+
     }
 }
