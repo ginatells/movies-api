@@ -1,3 +1,4 @@
+using GinaTellsMovies.API.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -27,6 +28,7 @@ namespace GinaTellsMovies.API
         {
             services.AddControllers();
             services.AddControllers().AddNewtonsoftJson();
+            services.AddScoped<IMoviesService, MoviesService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
