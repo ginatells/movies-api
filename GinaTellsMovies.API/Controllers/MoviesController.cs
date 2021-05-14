@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using static GinaTellsMovies.API.Properties.ConfigApi;
@@ -10,6 +11,17 @@ namespace GinaTellsMovies.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+
+    public class AnswerItem
+    {
+        public string keyword { get; set; }
+        public int weight { get; set; }
+    }
+
+    public class Answer
+    {
+        public List<AnswerItem> keywords { get; set; }
+    }
 
     public class MoviesController : ControllerBase
     {
@@ -46,19 +58,26 @@ namespace GinaTellsMovies.API.Controllers
         }
 
         [HttpPost("Answer")]
-        public async Task<IActionResult> Answer([FromQuery] string keyword)
+        public async Task<IActionResult> Answer([FromBody] Answer answer)
         {
-            Console.WriteLine(keyword);
             string responseString;
             object responseJson = null;
             const string api_key = ApiToken;
-            int[] keywordList = new int[] { 15325 };
-            //Console.WriteLine($"with_keywords={ keywordList[0]}");
-            var keywordId = await _moviesService.SearchKeywordId(keyword);
-            Console.WriteLine(keywordId);
+            List<int> keywordList = await _moviesService.SearchKeywordListIds(answer.keywords);
+            string keywordIdString = "";
+            for (int i = 0; i < keywordList.Count; i++)
+            {
+                if (i != keywordList.Count-1)
+                {
+                    keywordIdString = String.Concat(keywordIdString, keywordList[i], "|");
+                } else
+                {
+                    keywordIdString = String.Concat(keywordIdString, keywordList[i]);
+                }
+            }
             try
             {
-                HttpResponseMessage response = await _client.GetAsync($"https://api.themoviedb.org/3/movie/popular?api_key={api_key}&with_keywords={keywordId}");
+                HttpResponseMessage response = await _client.GetAsync($"https://api.themoviedb.org/3/movie/popular?api_key={api_key}&with_keywords={keywordIdString}");
                 if (response.IsSuccessStatusCode)
                 {
                     responseString = await response.Content.ReadAsStringAsync();
