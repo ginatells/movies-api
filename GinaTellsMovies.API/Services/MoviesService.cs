@@ -15,7 +15,7 @@ namespace GinaTellsMovies.API.Services
         Task<List<int>> SearchKeywordListIds(List<AnswerItem> keywords);
     }
 
-    public class MoviesService  : IMoviesService
+    public class MoviesService : IMoviesService
     {
         private readonly HttpClient _client = new HttpClient();
 
