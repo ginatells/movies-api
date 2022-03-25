@@ -28,8 +28,8 @@ namespace GinaTellsMovies.API.Controllers
             _moviesService = moviesService;
         }
 
-        [HttpGet("popularMovies")]
-        public async Task<IActionResult> PopularMovies()
+        [HttpGet("getPopularMovies")]
+        public async Task<IActionResult> GetPopularMovies()
         {
             var movieJson = await _moviesService.GetPopularMovies();
             return Ok(movieJson);
