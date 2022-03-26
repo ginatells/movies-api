@@ -9,22 +9,60 @@ using static GinaTellsMovies.API.Properties.ConfigApi;
 
 namespace GinaTellsMovies.API.Services
 {
-    public interface  IMoviesService
+    public interface IMoviesService
     {
-        Task<int> SearchKeywordId(string keyword);
-        Task<List<int>> SearchKeywordListIds(List<AnswerItem> keywords);
+        Task<object> GetPopularMovies();
+        Task<object> SearchMoviesAsync(Answer answer);
     }
 
     public class MoviesService : IMoviesService
     {
-        private readonly HttpClient _client = new HttpClient();
+        private readonly HttpClient _client = new();
+
+
+        public async Task<object> GetPopularMovies()
+        {
+            string movieString;
+            const string api_key = ApiToken;
+
+            HttpResponseMessage response = await _client.GetAsync($"https://api.themoviedb.org/3/movie/popular?api_key={api_key}");
+
+            movieString = await response.Content.ReadAsStringAsync();
+            object movieJson = JToken.Parse(movieString).ToObject<object>();
+
+            return movieJson;
+        }
+
+        public async Task<object> SearchMoviesAsync(Answer answer)
+        {
+            string responseString;
+            const string api_key = ApiToken;
+            List<int> keywordList = await SearchKeywordListIds(answer.Keywords);
+            string keywordIdString = "";
+            for (int i = 0; i < keywordList.Count; i++)
+            {
+                if (i != keywordList.Count - 1)
+                {
+                    keywordIdString = string.Concat(keywordIdString, keywordList[i], "|");
+                }
+                else
+                {
+                    keywordIdString = string.Concat(keywordIdString, keywordList[i]);
+                }
+            }
+
+            HttpResponseMessage response = await _client.GetAsync($"https://api.themoviedb.org/3/movie/popular?api_key={api_key}&with_keywords={keywordIdString}");
+
+            responseString = await response.Content.ReadAsStringAsync();
+            object responseJson = JToken.Parse(responseString).ToObject<object>();
+            return responseJson;
+        }
 
         //Receive keyword string and returns keyword ID
-        public async Task<int> SearchKeywordId(string keyword)
+        private async Task<int> SearchKeywordId(string keyword)
         {
             Console.WriteLine(keyword);
             string responseString;
-            JObject responseJson = null;
             const string api_key = ApiToken;
             try
             {
@@ -32,8 +70,8 @@ namespace GinaTellsMovies.API.Services
                 if (response.IsSuccessStatusCode)
                 {
                     responseString = await response.Content.ReadAsStringAsync();
-                    responseJson = JObject.Parse(responseString);
-                    return Int32.Parse(responseJson["results"][0]["id"].ToString());
+                    JObject responseJson = JObject.Parse(responseString);
+                    return int.Parse(responseJson["results"][0]["id"].ToString());
                 }
                 return -1;
             }
@@ -43,14 +81,14 @@ namespace GinaTellsMovies.API.Services
                 return -1;
             }
         }
-        
+
         //Receive Keyword list and returns list with keyword ids
-        public async Task<List<int>> SearchKeywordListIds(List<AnswerItem> keywords)
+        private async Task<List<int>> SearchKeywordListIds(List<AnswerItem> keywords)
         {
-            List<int> response = new List<int>();
+            List<int> response = new();
             for (int i = 0; i < keywords.Count; i++)
             {
-                response.Add(await SearchKeywordId(keywords.ElementAt(i).keyword));
+                response.Add(await SearchKeywordId(keywords.ElementAt(i).Keyword));
             }
             return response;
         }
